@@ -1,1 +1,1 @@
-https://onrcrpk.github.io/tr-puzzle/
+will delete
