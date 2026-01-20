@@ -1,86 +1,77 @@
+/* =========================
+   GENEL
+========================= */
 body {
   font-family: 'Roboto', sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: linear-gradient(135deg, #f7f6f3 0%, #e9ecef 100%);
   margin: 0;
-  padding: 20px;
-}
-
-.game-container {
-  text-align: center;
-  width: 100%;
-  max-width: 1200px;
-}
-
-
-.game-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem; 
-  margin-bottom: 10px; 
-}
-
-.game-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #333;
-  margin: 0; 
-}
-
-.game-subtitle {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0; 
-}
-
-#map-container {
-  width: 100%;
-  max-width: 1200px;
-  aspect-ratio: 3 / 2;
-  border: 4px solid #aaa;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
-  position: relative;
+  padding: 0;
+  background: linear-gradient(135deg, #f7f6f3 0%, #e9ecef 100%);
   overflow: hidden;
 }
 
-.score-container {
-  margin-bottom: 15px;
-  text-align: center;
+/* =========================
+   ÜST BAR
+========================= */
+#top-bar {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+}
+
+#score,
+#timer {
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background-color: #f7f6f3;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#score {
+  color: #2a9d8f;
 }
 
 #timer {
-  font-size: 1rem;
-  font-weight: bold;
   color: #e76f51;
-  background-color: #f7f6f3;
-  padding: 8px 16px;
-  border-radius: 6px;
-  margin-left: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-
-#score {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #2a9d8f;
-  background-color: #f7f6f3;
-  padding: 8px 16px;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+/* =========================
+   OYUN ALANI
+========================= */
+#map-container {
+  width: 100%;
+  height: 100svh;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
 }
 
+/* =========================
+   ROTATE UYARISI
+========================= */
+#rotate-warning {
+  position: fixed;
+  inset: 0;
+  background: #111;
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  z-index: 9999;
+  text-align: center;
+}
+
+/* =========================
+   KUTLAMA EKRANI (VARSA)
+========================= */
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
@@ -93,35 +84,29 @@ body {
 }
 
 .congrats-content {
-background: #fff;
-padding: 30px 40px;
-border-radius: 10px;
-text-align: center;
-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.congrats-content h2 {
-margin-top: 0;
-color: #2a9d8f;
-}
-
-.congrats-content p {
-font-size: 1.2rem;
-color: #333;
-margin: 20px 0;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 90%;
 }
 
 #restart-btn {
-padding: 10px 20px;
-font-size: 1rem;
-background-color: #2a9d8f;
-color: #fff;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-transition: background-color 0.3s ease;
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  background-color: #2a9d8f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
 }
 
-#restart-btn:hover {
-background-color: #21867a;
+/* =========================
+   DESKTOP (İSTEĞE BAĞLI)
+========================= */
+@media (min-width: 900px) {
+  #map-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 }

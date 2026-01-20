@@ -1,24 +1,50 @@
-// =======================
-// RESPONSIVE SETUP
-// =======================
 const container = document.getElementById("map-container");
+const rotateWarning = document.getElementById("rotate-warning");
 
-const width = container.clientWidth;
-const height = window.innerHeight * 0.9;
+/* =========================
+   LANDSCAPE ZORUNLULUĞU
+========================= */
+function checkOrientation() {
+  if (window.innerHeight > window.innerWidth) {
+    rotateWarning.style.display = "flex";
+    container.style.display = "none";
+  } else {
+    rotateWarning.style.display = "none";
+    container.style.display = "block";
+  }
+}
 
+window.addEventListener("resize", checkOrientation);
+window.addEventListener("orientationchange", checkOrientation);
+checkOrientation();
+
+/* =========================
+   BOYUT HESAPLAMA
+========================= */
+function getSize() {
+  return {
+    width: container.clientWidth,
+    height: container.clientHeight || window.innerHeight
+  };
+}
+
+let { width, height } = getSize();
 let timerStarted = false;
 
+/* =========================
+   SVG
+========================= */
 const svg = d3.select("#map-container")
   .append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet")
   .style("width", "100%")
-  .style("height", "auto")
+  .style("height", "100%")
   .style("touch-action", "none");
 
-// =======================
-// FRAME
-// =======================
+/* =========================
+   FRAME
+========================= */
 const frameMargin = 10;
 const frameWidth = width - frameMargin * 2;
 const frameHeight = height - frameMargin * 2;
@@ -29,14 +55,14 @@ svg.append("rect")
   .attr("width", frameWidth)
   .attr("height", frameHeight)
   .attr("fill", "none")
-  .attr("stroke", "black")
+  .attr("stroke", "#000")
   .attr("stroke-width", 4)
   .attr("rx", 8);
 
-// =======================
-// PROJECTION (RESPONSIVE)
-// =======================
-const scale = width < 600 ? width * 3.6 : 3000;
+/* =========================
+   PROJECTION
+========================= */
+const scale = width < 700 ? width * 3.8 : 3000;
 
 const projection = d3.geoMercator()
   .center([35, 39])
@@ -45,22 +71,50 @@ const projection = d3.geoMercator()
 
 const path = d3.geoPath().projection(projection);
 
-// =======================
-// TOUCH / MOUSE HELPER
-// =======================
+/* =========================
+   TOUCH / MOUSE HELPER
+========================= */
 function getPoint(event) {
   const e = event.sourceEvent.touches
     ? event.sourceEvent.touches[0]
     : event.sourceEvent;
-  return [e.clientX, e.clientY];
+
+  const svgNode = svg.node();
+  const pt = svgNode.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+
+  const cursor = pt.matrixTransform(
+    svgNode.getScreenCTM().inverse()
+  );
+
+  return [cursor.x, cursor.y];
 }
 
-// =======================
-// LOAD MAP
-// =======================
+/* =========================
+   TIMER
+========================= */
+let startTime, timerInterval;
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    const m = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    document.getElementById("timer").textContent = `Süre: ${m}:${ss}`;
+  }, 1000);
+}
+
+/* =========================
+   LOAD MAP & GAME
+========================= */
 d3.json("turkiye.geojson").then(data => {
 
-  svg.selectAll(".base-province")
+  /* BASE MAP */
+  const baseGroup = svg.append("g");
+
+  baseGroup.selectAll("path")
     .data(data.features)
     .enter()
     .append("path")
@@ -68,18 +122,7 @@ d3.json("turkiye.geojson").then(data => {
     .attr("fill", "#f0f0f0")
     .attr("stroke", "#bbb");
 
-  svg.selectAll(".province-label")
-    .data(data.features)
-    .enter()
-    .append("text")
-    .attr("x", d => path.centroid(d)[0])
-    .attr("y", d => path.centroid(d)[1])
-    .text(d => d.properties.ilad)
-    .attr("text-anchor", "middle")
-    .attr("font-size", width < 600 ? "8px" : "9px")
-    .attr("fill", "#444")
-    .style("pointer-events", "none");
-
+  /* PUZZLE PIECES */
   const shuffled = data.features.sort(() => Math.random() - 0.5);
 
   const pieces = svg.selectAll(".piece")
@@ -88,8 +131,8 @@ d3.json("turkiye.geojson").then(data => {
     .append("g")
     .attr("class", "piece");
 
-  const frameOffset = 45;
   const step = (2 * (frameWidth + frameHeight)) / shuffled.length;
+  const frameOffset = 45;
 
   pieces.each(function(d, i) {
     let x, y;
@@ -112,7 +155,7 @@ d3.json("turkiye.geojson").then(data => {
     const centroid = path.centroid(d);
 
     d3.select(this)
-      .attr("transform", `translate(${x},${y}) scale(${width < 600 ? 1.15 : 1})`)
+      .attr("transform", `translate(${x},${y}) scale(1.15)`)
       .append("path")
       .attr("d", path(d))
       .attr("fill", "#ccc")
@@ -121,13 +164,11 @@ d3.json("turkiye.geojson").then(data => {
       .style("cursor", "grab");
   });
 
-  // =======================
-  // GAME LOGIC
-  // =======================
+  /* GAME LOGIC */
   let offsetX, offsetY;
   let correct = 0;
   const total = 81;
-  const snapDistance = width < 600 ? 30 : 15;
+  const snapDistance = width < 700 ? 50 : 15;
 
   function updateScore() {
     document.getElementById("score").textContent = `${correct} / ${total}`;
@@ -136,13 +177,21 @@ d3.json("turkiye.geojson").then(data => {
   const drag = d3.drag()
     .on("start", function(event) {
       if (d3.select(this).classed("fixed")) return;
+
+      if (navigator.vibrate) navigator.vibrate(10);
+
       const [mx, my] = getPoint(event);
-      const t = d3.select(this).attr("transform").match(/translate\(([^,]+),([^)]+)\)/);
+      const t = d3.select(this)
+        .attr("transform")
+        .match(/translate\(([^,]+),([^)]+)\)/);
+
       offsetX = mx - parseFloat(t[1]);
       offsetY = my - parseFloat(t[2]);
+
       d3.select(this).raise();
     })
-    .on("drag", function(event, d) {
+
+    .on("drag", function(event) {
       if (d3.select(this).classed("fixed")) return;
 
       if (!timerStarted) {
@@ -159,11 +208,15 @@ d3.json("turkiye.geojson").then(data => {
 
       d3.select(this).attr("transform", `translate(${x},${y})`);
     })
+
     .on("end", function(event, d) {
       if (d3.select(this).classed("fixed")) return;
 
       const [cx, cy] = path.centroid(d);
-      const t = d3.select(this).attr("transform").match(/translate\(([^,]+),([^)]+)\)/);
+      const t = d3.select(this)
+        .attr("transform")
+        .match(/translate\(([^,]+),([^)]+)\)/);
+
       const x = parseFloat(t[1]);
       const y = parseFloat(t[2]);
 
@@ -184,18 +237,3 @@ d3.json("turkiye.geojson").then(data => {
   pieces.call(drag);
   updateScore();
 });
-
-// =======================
-// TIMER
-// =======================
-let startTime, timerInterval;
-
-function startTimer() {
-  startTime = Date.now();
-  timerInterval = setInterval(() => {
-    const sec = Math.floor((Date.now() - startTime) / 1000);
-    const m = String(Math.floor(sec / 60)).padStart(2, "0");
-    const s = String(sec % 60).padStart(2, "0");
-    document.getElementById("timer").textContent = `Süre: ${m}:${s}`;
-  }, 1000);
-}
